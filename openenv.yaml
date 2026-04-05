@@ -1,0 +1,35 @@
+name: openenv-email-triage
+version: 1.0.0
+description: "AI training environment for email triage, classification, and response generation."
+
+observation_space:
+  type: object
+  properties:
+    email:
+      type: object
+      properties:
+        id: {type: string}
+        subject: {type: string}
+        body: {type: string}
+        sender: {type: string}
+        history: {type: array, items: {type: string}}
+    instruction: {type: string}
+
+action_space:
+  type: object
+  properties:
+    type: {type: string, enum: [classify, reply, escalate, ignore]}
+    category: {type: string, enum: [support, spam, sales, complaint, job_application]}
+    response: {type: string}
+    reasoning: {type: string}
+
+tasks:
+  - id: easy_classification
+    name: Easy Classification
+    description: "Classify emails into correct categories."
+  - id: medium_response
+    name: Medium Response
+    description: "Classify and respond to support emails."
+  - id: hard_workflow
+    name: Hard Workflow
+    description: "Full triage workflow including complex decisions."
