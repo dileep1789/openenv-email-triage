@@ -6,3 +6,5 @@
 OPENAI_API_KEY=your_key_here
 API_BASE_URL=https://api.openai.com/v1
 MODEL_NAME=gpt-4-turbo-preview
+HF_TOKEN=your_hf_token_here
+LOCAL_IMAGE_NAME=your_image_name_here

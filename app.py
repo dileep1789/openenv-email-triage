@@ -13,10 +13,16 @@ def run_triage(task_id, api_key):
     if api_key:
         os.environ["OPENAI_API_KEY"] = api_key
     
-    # Reload config
-    current_key = get_config("OPENAI_API_KEY")
-    api_base = get_config("API_BASE_URL", "https://api.openai.com/v1")
-    model_name = get_config("MODEL_NAME", "gpt-4-turbo-preview")
+    # Configuration - Matching submission requirement pattern
+    API_BASE_URL = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
+    MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4-turbo-preview")
+    HF_TOKEN = os.getenv("HF_TOKEN")
+    LOCAL_IMAGE_NAME = os.getenv("LOCAL_IMAGE_NAME")
+    
+    current_key = os.getenv("OPENAI_API_KEY")
+    if not current_key:
+        from config_loader import get_config
+        current_key = get_config("OPENAI_API_KEY")
     
     env = OpenEnv()
     
@@ -24,7 +30,7 @@ def run_triage(task_id, api_key):
         if not current_key or current_key == "your_key_here":
             use_mock = True
         else:
-            client = OpenAI(base_url=api_base, api_key=current_key)
+            client = OpenAI(base_url=API_BASE_URL, api_key=current_key)
             use_mock = False
     except Exception:
         use_mock = True
@@ -49,12 +55,12 @@ def run_triage(task_id, api_key):
         Return ONLY valid JSON with keys: type, category, response, reasoning.
         """
         response = client.chat.completions.create(
-            model=model_name,
+            model=MODEL_NAME,
             messages=[{"role": "user", "content": prompt}],
             response_format={"type": "json_object"}
         )
         action_dict = json.loads(response.choices[0].message.content)
-        status = f"Success using {model_name}"
+        status = f"Success using {MODEL_NAME}"
 
     # Take step
     next_obs, reward, done, info = env.step(action_dict)

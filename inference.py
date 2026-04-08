@@ -3,22 +3,30 @@ import json
 from openai import OpenAI
 from env.environment import OpenEnv
 
+# Configuration - Matching submission requirement pattern
+API_BASE_URL = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
+MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4-turbo-preview")
+HF_TOKEN = os.getenv("HF_TOKEN")
+LOCAL_IMAGE_NAME = os.getenv("LOCAL_IMAGE_NAME")
+
 # Initialize OpenAI client (or fallback to Mock Agent)
 try:
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
+        from config_loader import get_config
+        api_key = get_config("OPENAI_API_KEY")
+        
+    if not api_key:
         raise ValueError("OPENAI_API_KEY missing. Falling back to Mock Agent.")
     
     client = OpenAI(
-        base_url=os.getenv("API_BASE_URL", "https://api.openai.com/v1"),
+        base_url=API_BASE_URL,
         api_key=api_key
     )
     USE_MOCK = False
 except Exception as e:
     print(f"[INFO] {e}")
     USE_MOCK = True
-
-model_name = os.getenv("MODEL_NAME", "gpt-4-turbo-preview")
 
 # Predefined mock responses for local testing
 MOCK_RESPONSES = {
@@ -62,7 +70,7 @@ for task_id in tasks:
         """
         
         response = client.chat.completions.create(
-            model=model_name,
+            model=MODEL_NAME,
             messages=[{"role": "user", "content": prompt}],
             response_format={"type": "json_object"}
         )
