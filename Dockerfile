@@ -2,19 +2,27 @@ FROM python:3.10-slim
 
 WORKDIR /app
 
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
 # Upgrade pip
 RUN pip install --no-cache-dir --upgrade pip
 
-# Install dependencies
+# Install requirements
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
+# Copy project files
 COPY . .
 
-# Default environment variables (can be overridden at runtime)
-ENV API_BASE_URL="https://api.openai.com/v1"
-ENV MODEL_NAME="gpt-4-turbo-preview"
+# Environment variables for HF Spaces
+ENV GRADIO_SERVER_NAME="0.0.0.0"
+ENV GRADIO_SERVER_PORT=7860
 
-# Entry point
-CMD ["python", "inference.py"]
+# Expose the standard Gradio port
+EXPOSE 7860
+
+# Default command to run the Gradio app
+CMD ["python", "app.py"]

@@ -1,0 +1,8 @@
+# Template for local tokens
+# To use: 
+# 1. Rename this file to 'token.txt'
+# 2. Add your keys below (format: KEY=VALUE)
+
+OPENAI_API_KEY=your_key_here
+API_BASE_URL=https://api.openai.com/v1
+MODEL_NAME=gpt-4-turbo-preview
