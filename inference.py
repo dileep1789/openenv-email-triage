@@ -35,7 +35,7 @@ MOCK_RESPONSES = {
     "hard_workflow": {"type": "escalate", "category": "job_application", "response": "Forwarded to HR.", "reasoning": "Mocking escalation."}
 }
 
-print("[START]")
+print("START")
 
 tasks = ["easy_classification", "medium_response", "hard_workflow"]
 
@@ -43,7 +43,7 @@ tasks = ["easy_classification", "medium_response", "hard_workflow"]
 env = OpenEnv()
 
 for task_id in tasks:
-    print(f"--- Task: {task_id} ---")
+    print("STEP")
     
     # Initialize environment for the task
     observation = env.reset(task_id)
@@ -83,4 +83,4 @@ for task_id in tasks:
     print(f"[ACTION] {json.dumps(action_dict)}")
     print(f"[REWARD] {reward}")
 
-print("[END]")
+print("END")
