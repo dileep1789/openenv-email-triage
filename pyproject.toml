@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "openenv-email-operations"
+version = "1.1.1"
+description = "OpenEnv enterprise email operations environment"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+  { name = "OpenEnv Round 1 Submission" }
+]
+dependencies = [
+  "pydantic>=2.0.0",
+  "openai>=1.0.0",
+  "pyyaml>=6.0.0",
+  "python-dotenv>=1.0.0",
+  "fastapi>=0.115.0",
+  "uvicorn>=0.30.0"
+]
+
+[tool.setuptools.packages.find]
+include = ["env*"]
