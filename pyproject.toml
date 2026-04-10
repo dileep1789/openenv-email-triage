@@ -13,6 +13,7 @@ authors = [
   { name = "OpenEnv Round 1 Submission" }
 ]
 dependencies = [
+  "openenv-core>=0.2.0",
   "pydantic>=2.0.0",
   "openai>=1.0.0",
   "pyyaml>=6.0.0",
@@ -20,6 +21,9 @@ dependencies = [
   "fastapi>=0.115.0",
   "uvicorn>=0.30.0"
 ]
+
+[project.scripts]
+server = "app:main"
 
 [tool.setuptools.packages.find]
 include = ["env*"]

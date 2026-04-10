@@ -3,6 +3,7 @@ from typing import Any, Dict, Optional
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
+import uvicorn
 
 from env.environment import OpenEnv
 
@@ -139,3 +140,7 @@ def state() -> Dict[str, Any]:
 @app.post("/state")
 def state_post() -> Dict[str, Any]:
     return env.state().model_dump()
+
+
+def main() -> None:
+    uvicorn.run("app:app", host="0.0.0.0", port=7860)
