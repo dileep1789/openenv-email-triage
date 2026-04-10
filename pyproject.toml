@@ -23,7 +23,7 @@ dependencies = [
 ]
 
 [project.scripts]
-server = "app:main"
+server = "server.app:main"
 
 [tool.setuptools.packages.find]
-include = ["env*"]
+include = ["env*", "server*"]
