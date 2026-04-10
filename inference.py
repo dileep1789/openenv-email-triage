@@ -130,7 +130,13 @@ def run_episode(env: OpenEnv, task_id: str, client: OpenAI | None) -> Tuple[floa
 
 
 def main() -> None:
-    api_key = os.getenv("OPENAI_API_KEY") or get_config("OPENAI_API_KEY")
+    # Evaluator injects API_KEY and API_BASE_URL; prioritize those to ensure
+    # requests go through the official proxy path.
+    api_key = (
+        os.getenv("API_KEY")
+        or os.getenv("OPENAI_API_KEY")
+        or get_config("OPENAI_API_KEY")
+    )
     use_mock = not api_key or api_key == "your_key_here"
     client = None
 
@@ -141,6 +147,7 @@ def main() -> None:
     scores: Dict[str, float] = {}
 
     print("[INFO] Running baseline inference", flush=True)
+    print(f"[INFO] Base URL: {API_BASE_URL}", flush=True)
     print(f"[INFO] Model mode: {'mock_policy' if client is None else MODEL_NAME}", flush=True)
 
     for task_id in TASK_IDS:
