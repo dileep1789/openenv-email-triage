@@ -140,25 +140,28 @@ def main() -> None:
     env = OpenEnv()
     scores: Dict[str, float] = {}
 
-    print("[INFO] Running baseline inference")
-    print(f"[INFO] Model mode: {'mock_policy' if client is None else MODEL_NAME}")
+    print("[INFO] Running baseline inference", flush=True)
+    print(f"[INFO] Model mode: {'mock_policy' if client is None else MODEL_NAME}", flush=True)
 
     for task_id in TASK_IDS:
+        print(f"[START] task={task_id}", flush=True)
         score, trace = run_episode(env, task_id, client)
         scores[task_id] = round(score, 4)
-        print(f"\n[Task] {task_id}")
-        for event in trace:
-            print(f"- phase={event['phase']} reward={event['reward']:.4f} action={json.dumps(event['action'])}")
-        print(f"[Task Score] {score:.4f}")
+        for step_index, event in enumerate(trace, start=1):
+            print(
+                f"[STEP] task={task_id} step={step_index} phase={event['phase']} reward={event['reward']:.4f}",
+                flush=True,
+            )
+        print(f"[END] task={task_id} score={score:.4f} steps={len(trace)}", flush=True)
 
     aggregate = round(sum(scores.values()) / len(scores), 4)
-    print("\n[SUMMARY]")
     summary = {
         "scores": scores,
         "average": aggregate,
         "model": "mock_policy" if client is None else MODEL_NAME,
     }
-    print(json.dumps(summary, indent=2))
+    print(f"[SUMMARY] average={aggregate:.4f}", flush=True)
+    print(json.dumps(summary, indent=2), flush=True)
 
     with open("baseline_results.json", "w", encoding="utf-8") as output_file:
         json.dump(summary, output_file, indent=2)
