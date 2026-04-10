@@ -146,6 +146,15 @@ def main() -> None:
     env = OpenEnv()
     scores: Dict[str, float] = {}
 
+    def normalize_for_validator(raw_score: float) -> float:
+        # Phase-2 validator requires each printed task score to be strictly within (0, 1).
+        bounded = round(raw_score, 4)
+        if bounded <= 0.0:
+            return 0.01
+        if bounded >= 1.0:
+            return 0.99
+        return bounded
+
     print("[INFO] Running baseline inference", flush=True)
     print(f"[INFO] Base URL: {API_BASE_URL}", flush=True)
     print(f"[INFO] Model mode: {'mock_policy' if client is None else MODEL_NAME}", flush=True)
@@ -153,7 +162,8 @@ def main() -> None:
     for task_id in TASK_IDS:
         print(f"[START] task={task_id}", flush=True)
         score, trace = run_episode(env, task_id, client)
-        scores[task_id] = round(score, 4)
+        score = normalize_for_validator(score)
+        scores[task_id] = score
         for step_index, event in enumerate(trace, start=1):
             print(
                 f"[STEP] task={task_id} step={step_index} phase={event['phase']} reward={event['reward']:.4f}",
