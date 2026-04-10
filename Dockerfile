@@ -17,12 +17,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy project files
 COPY . .
 
-# Environment variables for HF Spaces
-ENV GRADIO_SERVER_NAME="0.0.0.0"
-ENV GRADIO_SERVER_PORT=7860
-
-# Expose the standard Gradio port
+# Expose the API port used by Hugging Face container runtime
 EXPOSE 7860
 
-# Default command to run the Gradio app
-CMD ["python", "app.py"]
+# Default command to run the OpenEnv API server
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "7860"]

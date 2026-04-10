@@ -4,6 +4,7 @@ emoji: "📬"
 colorFrom: blue
 colorTo: green
 sdk: docker
+app_port: 7860
 pinned: false
 ---
 
@@ -85,6 +86,8 @@ Per-step signals:
 - `classification` component
 - `decision` component
 - `response_quality` component (keyword coverage)
+- `no_response_bonus` for correctly ending ignore workflows
+- `safety_penalty` for unsafe response content
 - `invalid_action_penalty`
 - `efficiency_penalty` (loops / extra steps)
 
@@ -96,6 +99,7 @@ Episode score is accumulated into `EnvState.cumulative_reward` and clamped to `[
 - Per-phase actions and rewards
 - Per-task final score
 - Average score
+- A machine-readable `baseline_results.json`
 
 Reproducibility controls:
 - Deterministic tasks
@@ -126,7 +130,7 @@ python inference.py
 ## Hugging Face Spaces Deployment
 
 This project includes:
-- Gradio app entrypoint: `app.py`
+- FastAPI app entrypoint: `app.py`
 - Container config: `Dockerfile`
 
 Typical HF Space setup:
@@ -137,7 +141,13 @@ Typical HF Space setup:
    - `API_BASE_URL` (optional)
    - `MODEL_NAME` (optional)
 4. The container starts with:
-   - `python app.py`
+   - `uvicorn app:app --host 0.0.0.0 --port 7860`
+
+### API Endpoints Used by Evaluator
+
+- `POST /reset`
+- `POST /step`
+- `GET /state`
 
 ## OpenEnv Validation
 
