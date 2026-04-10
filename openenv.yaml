@@ -1,35 +1,75 @@
-name: openenv-email-triage
-version: 1.0.0
-description: "AI training environment for email triage, classification, and response generation."
+name: openenv-email-operations
+version: 1.1.0
+description: >
+  A real-world enterprise email operations simulator where an agent performs
+  classification, workflow routing, and policy-compliant response drafting.
+
+entrypoint: env.environment:OpenEnv
+
+metadata:
+  domain: customer-operations
+  author: openenv-round1-submission
+  deterministic_tasks: true
+  max_episode_steps: 5
 
 observation_space:
   type: object
+  required: [task_id, difficulty, email, instruction, allowed_actions, phase_name, progress, last_feedback]
   properties:
+    task_id: { type: string }
+    difficulty: { type: string, enum: [easy, medium, hard] }
+    instruction: { type: string }
+    phase_name: { type: string, enum: [classification, decision, response] }
+    progress: { type: number, minimum: 0.0, maximum: 1.0 }
+    last_feedback: { type: string }
+    allowed_actions:
+      type: array
+      items: { type: string, enum: [classify, decide, respond] }
     email:
       type: object
+      required: [id, subject, body, sender, history]
       properties:
-        id: {type: string}
-        subject: {type: string}
-        body: {type: string}
-        sender: {type: string}
-        history: {type: array, items: {type: string}}
-    instruction: {type: string}
+        id: { type: string }
+        subject: { type: string }
+        body: { type: string }
+        sender: { type: string }
+        history:
+          type: array
+          items: { type: string }
 
 action_space:
   type: object
+  required: [type]
   properties:
-    type: {type: string, enum: [classify, reply, escalate, ignore]}
-    category: {type: string, enum: [support, spam, sales, complaint, job_application]}
-    response: {type: string}
-    reasoning: {type: string}
+    type: { type: string, enum: [classify, decide, respond] }
+    category: { type: string, enum: [support, spam, sales, complaint, job_application] }
+    decision: { type: string, enum: [reply, escalate, ignore] }
+    response: { type: string }
+    reasoning: { type: string }
+
+reward_space:
+  type: object
+  required: [value, components, progress, explanation]
+  properties:
+    value: { type: number, minimum: 0.0, maximum: 1.0 }
+    progress: { type: number, minimum: 0.0, maximum: 1.0 }
+    explanation: { type: string }
+    components:
+      type: object
+      properties:
+        classification: { type: number }
+        decision: { type: number }
+        response_quality: { type: number }
+        efficiency_penalty: { type: number }
+        invalid_action_penalty: { type: number }
 
 tasks:
   - id: easy_classification
-    name: Easy Classification
-    description: "Classify emails into correct categories."
+    difficulty: easy
+    objective: Correctly identify spam and ignore without unnecessary response.
   - id: medium_response
-    name: Medium Response
-    description: "Classify and respond to support emails."
+    difficulty: medium
+    objective: Resolve a support issue with a policy-safe reply.
   - id: hard_workflow
-    name: Hard Workflow
-    description: "Full triage workflow including complex decisions."
+    difficulty: hard
+    objective: Escalate high-risk enterprise complaint with incident communication.

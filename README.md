@@ -1,69 +1,158 @@
-# OpenEnv Email Triage AI Environment
+---
+title: OpenEnv Enterprise Email Operations
+emoji: "📬"
+colorFrom: blue
+colorTo: green
+sdk: docker
+pinned: false
+---
 
-This project implements a competition-level AI training environment for email triage, classification, and response generation, following the OpenEnv specification.
+# OpenEnv Enterprise Email Operations
 
-## 🚀 Overview
+This repository contains a complete OpenEnv environment for a real-world task: enterprise email operations triage.
 
-The environment simulates a real-world email management system where an AI agent must:
-1. **Observe**: Read incoming emails (subject, body, sender, history).
-2. **Classify**: Categorize emails (Support, Spam, Sales, Complaint, Job Application).
-3. **Act**: Decide on the next step (Reply, Escalate, Ignore).
-4. **Respond**: Generate a professional and accurate response if needed.
+The agent must process incoming operational emails through a multi-step workflow:
+1. Classify the email.
+2. Choose a workflow decision (reply, escalate, ignore).
+3. Draft a response when required.
 
-## 📦 Project Structure
+The environment follows the standard OpenEnv API:
+- `reset(task_id) -> Observation`
+- `step(action) -> (Observation, reward, done, info)`
+- `state() -> EnvState`
 
-```text
-openenv-email-triage/
-├── env/
-│   ├── environment.py  # Core OpenEnv class
-│   ├── models.py       # Pydantic data models
-│   ├── tasks.py        # Task data (Easy, Medium, Hard)
-│   └── graders.py      # Reward calculation logic
-├── openenv.yaml        # Environment metadata
-├── inference.py        # Standard agent execution loop
-├── Dockerfile          # Containerization
-├── requirements.txt    # dependencies
-└── README.md           # Documentation
+## Why This Is Real-World
+
+Teams in support, trust-and-safety, and incident operations triage email continuously. The simulator captures realistic decisions:
+- Distinguishing spam from operational requests.
+- Selecting safe routing behavior for normal vs critical cases.
+- Producing policy-safe communication for customer-facing actions.
+
+## Environment Spec Compliance
+
+Typed Pydantic models are implemented in `env/models.py`:
+- `Observation`
+- `Action`
+- `Reward`
+- `EnvState`
+- Supporting enums (`ActionType`, `DecisionType`, `EmailCategory`)
+
+Environment logic is implemented in `env/environment.py` and uses deterministic task definitions from `env/tasks.py` plus programmatic grading in `env/graders.py`.
+
+Metadata and space definitions are provided in `openenv.yaml`.
+
+## Action Space
+
+Action payload:
+```json
+{
+  "type": "classify | decide | respond",
+  "category": "support | spam | sales | complaint | job_application",
+  "decision": "reply | escalate | ignore",
+  "response": "string",
+  "reasoning": "string"
+}
 ```
 
-## 🎯 Reward System
+Phase constraints:
+- `classification` phase: only `type="classify"` is valid.
+- `decision` phase: only `type="decide"` is valid.
+- `response` phase: only `type="respond"` is valid.
 
-Rewards are granted based on three criteria:
-- **Classification Accuracy (40%)**: Correctly identifying the email category.
-- **Action Selection (30%)**: Choosing the correct action (Reply vs. Escalate).
-- **Response Content (30%)**: Including relevant keywords in the reply.
+## Observation Space
 
-## 🛠️ Getting Started
+Observation payload includes:
+- `task_id`, `difficulty`
+- `email` object (`id`, `subject`, `body`, `sender`, `history`)
+- `instruction`
+- `phase_name`
+- `allowed_actions`
+- `progress`
+- `last_feedback`
 
-### Prerequisites
-- Python 3.10+
-- OpenAI API Key (or compatible provider)
+## Tasks and Difficulty
 
-### Local Setup
-1. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-2. Set environment variables:
-   ```bash
-   export OPENAI_API_KEY="your-key"
-   export API_BASE_URL="api-base-url"
-   export MODEL_NAME="model-name"
-   ```
-3. Run inference:
-   ```bash
-   python inference.py
-   ```
+Three deterministic tasks are provided:
+- `easy_classification`: spam detection + safe ignore flow.
+- `medium_response`: support recovery request requiring policy-safe reply.
+- `hard_workflow`: enterprise outage complaint requiring escalation and incident comms.
 
-### Docker
-Build and run with Docker:
-```bash
-docker build -t email-triage .
-docker run -e OPENAI_API_KEY="your-key" email-triage
+## Reward Function
+
+The reward is shaped across the full trajectory, not only terminal success.
+
+Per-step signals:
+- `classification` component
+- `decision` component
+- `response_quality` component (keyword coverage)
+- `invalid_action_penalty`
+- `efficiency_penalty` (loops / extra steps)
+
+Episode score is accumulated into `EnvState.cumulative_reward` and clamped to `[0.0, 1.0]`.
+
+## Baseline Inference (Reproducible)
+
+`inference.py` runs all 3 tasks and prints:
+- Per-phase actions and rewards
+- Per-task final score
+- Average score
+
+Reproducibility controls:
+- Deterministic tasks
+- `temperature=0` for model calls
+- Deterministic mock policy fallback when `OPENAI_API_KEY` is missing
+
+### Run baseline
+
+Windows PowerShell:
+```powershell
+$env:OPENAI_API_KEY="your-key"
+python inference.py
 ```
 
-## 🏆 Competition Tips
+Mock-only baseline:
+```powershell
+python mock_inference.py
+```
 
-- **High Fidelity**: The environment uses structured Pydantic models for type safety.
-- **Task Scaling**: Tasks range from simple classification to complex "hard" workflows.
-- **Deterministic Grading**: High-scoring submissions use clear, objective scoring metrics.
+## Local Setup
+
+```powershell
+python -m pip install -r requirements.txt
+python verify_env.py
+python inference.py
+```
+
+## Hugging Face Spaces Deployment
+
+This project includes:
+- Gradio app entrypoint: `app.py`
+- Container config: `Dockerfile`
+
+Typical HF Space setup:
+1. Create a Docker Space on Hugging Face.
+2. Push this repository to the Space.
+3. Add secrets/env vars in Space settings:
+   - `OPENAI_API_KEY` (optional)
+   - `API_BASE_URL` (optional)
+   - `MODEL_NAME` (optional)
+4. The container starts with:
+   - `python app.py`
+
+## OpenEnv Validation
+
+If OpenEnv CLI is available in your runtime:
+```powershell
+openenv validate
+```
+
+## File Guide
+
+- `env/models.py`: typed schema models and enums.
+- `env/tasks.py`: deterministic task definitions.
+- `env/graders.py`: deterministic reward/grading logic.
+- `env/environment.py`: `reset/step/state` runtime logic.
+- `inference.py`: OpenAI baseline runner.
+- `mock_inference.py`: deterministic non-API baseline runner.
+- `app.py`: Gradio app for Spaces/local demos.
+- `openenv.yaml`: environment metadata/spec declaration.
