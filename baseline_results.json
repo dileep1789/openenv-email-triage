@@ -1,0 +1,9 @@
+{
+  "scores": {
+    "easy_classification": 1.0,
+    "medium_response": 1.0,
+    "hard_workflow": 1.0
+  },
+  "average": 1.0,
+  "model": "mock_policy"
+}

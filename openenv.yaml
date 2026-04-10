@@ -60,6 +60,8 @@ reward_space:
         classification: { type: number }
         decision: { type: number }
         response_quality: { type: number }
+        no_response_bonus: { type: number }
+        safety_penalty: { type: number }
         efficiency_penalty: { type: number }
         invalid_action_penalty: { type: number }
 

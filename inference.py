@@ -103,13 +103,17 @@ def run_episode(env: OpenEnv, task_id: str, client: OpenAI | None) -> Tuple[floa
             action = mock_policy(task_id, phase)
         else:
             prompt = build_prompt(observation.model_dump(), state)
-            response = client.chat.completions.create(
-                model=MODEL_NAME,
-                temperature=0,
-                messages=[{"role": "user", "content": prompt}],
-                response_format={"type": "json_object"},
-            )
-            action = json.loads(response.choices[0].message.content)
+            try:
+                response = client.chat.completions.create(
+                    model=MODEL_NAME,
+                    temperature=0,
+                    messages=[{"role": "user", "content": prompt}],
+                    response_format={"type": "json_object"},
+                )
+                action = json.loads(response.choices[0].message.content)
+            except Exception as exc:
+                action = mock_policy(task_id, phase)
+                action["reasoning"] = f"Fallback policy used after model error: {exc}"
 
         observation, reward, done, info = env.step(action)
         trace.append(
@@ -149,7 +153,15 @@ def main() -> None:
 
     aggregate = round(sum(scores.values()) / len(scores), 4)
     print("\n[SUMMARY]")
-    print(json.dumps({"scores": scores, "average": aggregate}, indent=2))
+    summary = {
+        "scores": scores,
+        "average": aggregate,
+        "model": "mock_policy" if client is None else MODEL_NAME,
+    }
+    print(json.dumps(summary, indent=2))
+
+    with open("baseline_results.json", "w", encoding="utf-8") as output_file:
+        json.dump(summary, output_file, indent=2)
 
 
 if __name__ == "__main__":

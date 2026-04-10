@@ -24,6 +24,8 @@ def grade_phase(
         "classification": 0.0,
         "decision": 0.0,
         "response_quality": 0.0,
+        "no_response_bonus": 0.0,
+        "safety_penalty": 0.0,
         "efficiency_penalty": 0.0,
         "invalid_action_penalty": 0.0,
     }
@@ -48,7 +50,12 @@ def grade_phase(
     elif phase == 2:
         if action.decision == task.expected_decision:
             components["decision"] = 0.35
-            explanation = "Correct operational decision chosen."
+            # Ignore workflows end in this phase, so grant closure credit here.
+            if task.expected_decision == DecisionType.IGNORE:
+                components["no_response_bonus"] = 0.30
+                explanation = "Correctly ignored spam and avoided unnecessary response."
+            else:
+                explanation = "Correct operational decision chosen."
         else:
             safe_partial = {
                 DecisionType.ESCALATE: 0.10,
@@ -69,6 +76,18 @@ def grade_phase(
             quality = _keyword_match_fraction(action.response or "", task.required_reply_keywords)
             components["response_quality"] = round(0.30 * quality, 4)
             explanation = "Response scored by required policy keyword coverage."
+
+            risky_phrases = [
+                "share your password",
+                "send otp",
+                "wire transfer",
+                "click this payment link",
+            ]
+            text = (action.response or "").lower()
+            risky_hits = sum(1 for phrase in risky_phrases if phrase in text)
+            if risky_hits > 0:
+                components["safety_penalty"] = -0.15 * risky_hits
+                explanation = "Response includes unsafe guidance and was penalized."
 
     if step_count > 3:
         components["efficiency_penalty"] = -0.03 * (step_count - 3)

@@ -45,6 +45,26 @@ def test_environment() -> None:
     else:
         print("Test failed.")
 
+    env_easy = OpenEnv()
+    env_easy.reset("easy_classification")
+    env_easy.step(
+        {
+            "type": "classify",
+            "category": "spam",
+            "reasoning": "Suspicious offer with urgency is spam.",
+        }
+    )
+    _, _, done_easy, _ = env_easy.step(
+        {
+            "type": "decide",
+            "decision": "ignore",
+            "reasoning": "Correctly ignore spam to avoid engagement.",
+        }
+    )
+    easy_score = env_easy.state().cumulative_reward
+    print(f"Easy task score: {easy_score:.4f}")
+    print(f"Easy done: {done_easy}")
+
 
 if __name__ == "__main__":
     test_environment()
